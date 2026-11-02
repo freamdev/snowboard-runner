@@ -24,6 +24,14 @@
     .download{margin:0 0 56px;background:var(--panel);border:1px solid #334b58;border-radius:13px;padding:32px 38px;display:flex;align-items:center;justify-content:space-between;gap:25px}
     .download h2{font-size:23px;margin:0 0 12px;letter-spacing:.075em}.download p{margin:0;color:var(--muted);font-size:14px}
     .download-button{display:inline-flex;gap:13px;align-items:center;justify-content:center;background:var(--accent);color:#0b2428;text-decoration:none;font-size:14px;font-weight:800;letter-spacing:.055em;padding:18px 25px;border-radius:10px;white-space:nowrap;transition:transform .18s,background .18s}.download-button:hover{background:#84f6d0;transform:translateY(-2px)}.download-button svg{height:19px;width:19px}
+    .download-info{min-width:0}
+    .download-platforms{display:flex;flex-wrap:wrap;gap:14px;align-items:flex-end}
+    .download-platform{display:flex;flex-direction:column;gap:10px;min-width:175px}
+    .download-platform p{font-size:12px;white-space:nowrap}
+    .download-platform .download-button{min-width:175px;padding:16px 20px}
+    .download-button[data-state="missing"]{background:#274958;color:#e3f2f7}
+    @media(max-width:760px){.download-platforms{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}.download-platform{min-width:0}.download-platform .download-button{min-width:0;padding:15px 8px;font-size:12px;gap:8px}.download-platform .download-button svg{width:16px;height:16px}}
+    @media(max-width:420px){.download-platforms{grid-template-columns:1fr}.download-platform .download-button{font-size:14px}}
     footer{border-top:1px solid var(--stroke);padding:28px 0 35px;color:#89a4b2;font-size:12px;text-align:center}
     @media(max-width:760px){.site{width:min(100% - 36px,600px)}.topbar{height:70px}.hero{grid-template-columns:1fr;gap:32px;padding:54px 0 45px}.hero-title{font-size:clamp(47px,10vw,70px)}.platform{margin-top:18px}.gallery{padding:38px 0}.arrow{width:32px;height:38px;font-size:23px}.arrow.prev{left:8px}.arrow.next{right:8px}.download{padding:24px;align-items:stretch;flex-direction:column;margin-bottom:36px}.download-button{width:100%}}
     @media(prefers-reduced-motion:reduce){*,*:before,*:after{transition:none!important;scroll-behavior:auto!important}}
@@ -50,9 +58,17 @@
 <header class="topbar"><div class="brand">SNOWBOARD <span class="accent">RUNNER</span></div></header>
 <main>
 <section class="download" id="download">
-<div><h2>DOWNLOAD</h2><p>Snowboard Runner  ·  Windows  ·  <span id="game-version">Checking version…</span></p></div>
-
-<a aria-disabled="true" aria-label="Checking latest game release" class="download-button" data-state="loading" href="https://github.com/freamdev/snowboard-runner/releases/latest" rel="noopener noreferrer" target="_blank"><svg aria-hidden="true" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2.2" viewbox="0 0 24 24"><path d="M12 3v12m-5-5 5 5 5-5M4 17v4h16v-4"></path></svg> DOWNLOAD GAME</a>
+<div class="download-info"><h2>DOWNLOAD</h2><p>Snowboard Runner</p></div>
+<div class="download-platforms">
+<div class="download-platform">
+<p>Windows · <span id="windows-version">Checking version…</span></p>
+<a aria-disabled="true" aria-label="Checking Windows release" class="download-button" data-platform="windows" data-state="loading" href="https://github.com/freamdev/snowboard-runner/releases" rel="noopener noreferrer"><svg aria-hidden="true" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2.2" viewBox="0 0 24 24"><path d="M12 3v12m-5-5 5 5 5-5M4 17v4h16v-4"></path></svg><span class="button-label">WINDOWS</span></a>
+</div>
+<div class="download-platform">
+<p>Linux · <span id="linux-version">Checking version…</span></p>
+<a aria-disabled="true" aria-label="Checking Linux release" class="download-button" data-platform="linux" data-state="loading" href="https://github.com/freamdev/snowboard-runner/releases" rel="noopener noreferrer"><svg aria-hidden="true" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2.2" viewBox="0 0 24 24"><path d="M12 3v12m-5-5 5 5 5-5M4 17v4h16v-4"></path></svg><span class="button-label">LINUX</span></a>
+</div>
+</div>
 </section>
 <div class="rule"></div>
 <section aria-label="Game screenshots" class="gallery">
@@ -80,41 +96,79 @@
 (()=>{const gallery=document.getElementById('gallery');const slides=[...gallery.querySelectorAll('.slide')];const dots=[...gallery.querySelectorAll('.dot')];let index=0,timer;function show(n){index=(n+slides.length)%slides.length;slides.forEach((s,i)=>s.classList.toggle('active',i===index));dots.forEach((d,i)=>{d.classList.toggle('active',i===index);if(i===index)d.setAttribute('aria-current','true');else d.removeAttribute('aria-current')})}function next(){show(index+1)}function start(){if(window.matchMedia('(prefers-reduced-motion: reduce)').matches)return;stop();timer=setInterval(next,5500)}function stop(){clearInterval(timer)}gallery.querySelector('.next').addEventListener('click',()=>{next();start()});gallery.querySelector('.prev').addEventListener('click',()=>{show(index-1);start()});dots.forEach((d,i)=>d.addEventListener('click',()=>{show(i);start()}));gallery.addEventListener('mouseenter',stop);gallery.addEventListener('mouseleave',start);gallery.addEventListener('focusin',stop);gallery.addEventListener('focusout',e=>{if(!gallery.contains(e.relatedTarget))start()});document.addEventListener('visibilitychange',()=>document.hidden?stop():start());start()})();
 </script>
 <script>
-// Public GitHub Releases API; no API key or separate backend required.
+// Each platform independently uses its highest-version published release with a matching ZIP.
 (async () => {
-  const api = 'https://api.github.com/repos/freamdev/snowboard-runner/releases/latest';
-  const releasesPage = 'https://github.com/freamdev/snowboard-runner/releases';
-  const button = document.querySelector('.download-button');
-  const version = document.getElementById('game-version');
-  const text = [...button.childNodes].find(node => node.nodeType === Node.TEXT_NODE && node.textContent.trim());
-  const setButtonText = value => { if (text) text.textContent = ' ' + value; };
+  const repo = 'freamdev/snowboard-runner';
+  const releasesPage = `https://github.com/${repo}/releases`;
+  const fileNames = {
+    windows: 'SnowboardRunner-Windows.zip',
+    linux: 'SnowboardRunner-Linux.zip'
+  };
+  const platforms = Object.keys(fileNames);
+  const controls = Object.fromEntries(platforms.map(platform => [platform, {
+    button: document.querySelector(`[data-platform="${platform}"]`),
+    version: document.getElementById(`${platform}-version`)
+  }]));
 
-  // Until a valid release is verified, don't send visitors to a placeholder.
-  button.addEventListener('click', event => {
-    if (button.dataset.state === 'loading') event.preventDefault();
-  });
+  for (const { button } of Object.values(controls)) {
+    button.addEventListener('click', event => {
+      if (button.dataset.state === 'loading') event.preventDefault();
+    });
+  }
+
+  // Numeric version comparison, so v0.0.10 is newer than v0.0.9.
+  const parseVersion = tag => {
+    const match = /^v?(\d+)\.(\d+)\.(\d+)$/i.exec(tag || '');
+    return match ? match.slice(1).map(Number) : null;
+  };
+  const compareVersions = (a, b) => {
+    const av = parseVersion(a.tag_name), bv = parseVersion(b.tag_name);
+    if (av && bv) {
+      for (let i = 0; i < 3; i++) if (av[i] !== bv[i]) return bv[i] - av[i];
+      return 0;
+    }
+    if (av) return -1;
+    if (bv) return 1;
+    return Date.parse(b.published_at || 0) - Date.parse(a.published_at || 0);
+  };
+  const fallback = (platform, unavailable) => {
+    const { button, version } = controls[platform];
+    version.textContent = unavailable ? 'Not available' : 'See releases';
+    button.href = releasesPage;
+    button.dataset.state = unavailable ? 'missing' : 'error';
+    button.removeAttribute('aria-disabled');
+    button.querySelector('.button-label').textContent = 'VIEW RELEASES';
+    button.setAttribute('aria-label', 'View Snowboard Runner releases');
+  };
 
   try {
-    const response = await fetch(api, { headers: { 'Accept': 'application/vnd.github+json' } });
-    if (!response.ok) throw new Error('GitHub API request failed');
-    const release = await response.json();
-    const zip = release.assets?.find(asset => asset.name.toLowerCase().endsWith('.zip') && asset.browser_download_url);
-    if (!zip) throw new Error('No ZIP attached to the latest release');
+    const response = await fetch(`https://api.github.com/repos/${repo}/releases?per_page=100`, {
+      headers: { 'Accept': 'application/vnd.github+json' }
+    });
+    if (!response.ok) throw new Error(`GitHub API returned ${response.status}`);
+    const releases = (await response.json())
+      .filter(release => !release.draft && !release.prerelease)
+      .sort(compareVersions);
 
-    version.textContent = release.tag_name || release.name || 'Latest';
-    button.href = zip.browser_download_url;
-    button.dataset.state = 'ready';
-    button.removeAttribute('aria-disabled');
-    button.setAttribute('aria-label', 'Download Snowboard Runner ' + version.textContent);
+    for (const platform of platforms) {
+      const matching = releases.map(release => ({
+        release,
+        asset: (release.assets || []).find(asset =>
+          asset.name.toLowerCase() === fileNames[platform].toLowerCase() && asset.browser_download_url
+        )
+      })).find(item => item.asset);
+
+      if (!matching) { fallback(platform, true); continue; }
+      const { button, version } = controls[platform];
+      version.textContent = matching.release.tag_name;
+      button.href = matching.asset.browser_download_url;
+      button.dataset.state = 'ready';
+      button.removeAttribute('aria-disabled');
+      button.setAttribute('aria-label', `Download Snowboard Runner for ${platform}, ${matching.release.tag_name}`);
+    }
   } catch (error) {
-    // No misleading version or broken ZIP URL if the API is unreachable.
-    version.textContent = 'Latest release';
-    button.href = releasesPage;
-    button.dataset.state = 'error';
-    button.removeAttribute('aria-disabled');
-    button.setAttribute('aria-label', 'View available Snowboard Runner releases');
-    setButtonText('VIEW RELEASES');
-    console.warn('Could not retrieve latest release:', error);
+    for (const platform of platforms) fallback(platform, false);
+    console.warn('Could not retrieve Snowboard Runner releases:', error);
   }
 })();
 </script></body></html>
