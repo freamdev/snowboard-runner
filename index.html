@@ -29,7 +29,7 @@
     .download-platform{display:flex;flex-direction:column;gap:10px;min-width:175px}
     .download-platform p{font-size:12px;white-space:nowrap}
     .download-platform .download-button{min-width:175px;padding:16px 20px}
-    .download-button[data-state="missing"]{background:#274958;color:#e3f2f7}
+    .download-button[data-state="missing"],.download-button[data-state="error"]{background:#274958;color:#a6bbc5;cursor:not-allowed;pointer-events:none;transform:none;opacity:.75}
     @media(max-width:760px){.download-platforms{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}.download-platform{min-width:0}.download-platform .download-button{min-width:0;padding:15px 8px;font-size:12px;gap:8px}.download-platform .download-button svg{width:16px;height:16px}}
     @media(max-width:420px){.download-platforms{grid-template-columns:1fr}.download-platform .download-button{font-size:14px}}
     footer{border-top:1px solid var(--stroke);padding:28px 0 35px;color:#89a4b2;font-size:12px;text-align:center}
@@ -49,8 +49,7 @@
     }
   
     .download-button[data-state="loading"]{opacity:.65;cursor:wait;pointer-events:none}
-    .download-button[data-state="error"]{background:#274958;color:#e3f2f7}
-    .download-button[data-state="error"]:hover{background:#356075}
+
 </style>
 </head>
 <body>
@@ -62,11 +61,11 @@
 <div class="download-platforms">
 <div class="download-platform">
 <p>Windows · <span id="windows-version">Checking version…</span></p>
-<a aria-disabled="true" aria-label="Checking Windows release" class="download-button" data-platform="windows" data-state="loading" href="https://github.com/freamdev/snowboard-runner/releases" rel="noopener noreferrer"><svg aria-hidden="true" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2.2" viewBox="0 0 24 24"><path d="M12 3v12m-5-5 5 5 5-5M4 17v4h16v-4"></path></svg><span class="button-label">WINDOWS</span></a>
+<a aria-disabled="true" aria-label="Checking Windows release" class="download-button" data-platform="windows" data-state="loading" ><svg aria-hidden="true" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2.2" viewBox="0 0 24 24"><path d="M12 3v12m-5-5 5 5 5-5M4 17v4h16v-4"></path></svg><span class="button-label">WINDOWS</span></a>
 </div>
 <div class="download-platform">
 <p>Linux · <span id="linux-version">Checking version…</span></p>
-<a aria-disabled="true" aria-label="Checking Linux release" class="download-button" data-platform="linux" data-state="loading" href="https://github.com/freamdev/snowboard-runner/releases" rel="noopener noreferrer"><svg aria-hidden="true" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2.2" viewBox="0 0 24 24"><path d="M12 3v12m-5-5 5 5 5-5M4 17v4h16v-4"></path></svg><span class="button-label">LINUX</span></a>
+<a aria-disabled="true" aria-label="Checking Linux release" class="download-button" data-platform="linux" data-state="loading" ><svg aria-hidden="true" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2.2" viewBox="0 0 24 24"><path d="M12 3v12m-5-5 5 5 5-5M4 17v4h16v-4"></path></svg><span class="button-label">LINUX</span></a>
 </div>
 </div>
 </section>
@@ -99,7 +98,6 @@
 // Each platform independently uses its highest-version published release with a matching ZIP.
 (async () => {
   const repo = 'freamdev/snowboard-runner';
-  const releasesPage = `https://github.com/${repo}/releases`;
   const fileNames = {
     windows: 'SnowboardRunner-Windows.zip',
     linux: 'SnowboardRunner-Linux.zip'
@@ -112,7 +110,7 @@
 
   for (const { button } of Object.values(controls)) {
     button.addEventListener('click', event => {
-      if (button.dataset.state === 'loading') event.preventDefault();
+      if (button.dataset.state !== 'ready') event.preventDefault();
     });
   }
 
@@ -133,12 +131,12 @@
   };
   const fallback = (platform, unavailable) => {
     const { button, version } = controls[platform];
-    version.textContent = unavailable ? 'Not available' : 'See releases';
-    button.href = releasesPage;
+    version.textContent = unavailable ? 'Not available' : 'Unable to check version';
+    button.removeAttribute('href');
     button.dataset.state = unavailable ? 'missing' : 'error';
-    button.removeAttribute('aria-disabled');
-    button.querySelector('.button-label').textContent = 'VIEW RELEASES';
-    button.setAttribute('aria-label', 'View Snowboard Runner releases');
+    button.setAttribute('aria-disabled', 'true');
+    button.querySelector('.button-label').textContent = 'NOT AVAILABLE';
+    button.setAttribute('aria-label', `${platform} download not available`);
   };
 
   try {
@@ -162,6 +160,7 @@
       const { button, version } = controls[platform];
       version.textContent = matching.release.tag_name;
       button.href = matching.asset.browser_download_url;
+      button.querySelector('.button-label').textContent = platform.toUpperCase();
       button.dataset.state = 'ready';
       button.removeAttribute('aria-disabled');
       button.setAttribute('aria-label', `Download Snowboard Runner for ${platform}, ${matching.release.tag_name}`);
